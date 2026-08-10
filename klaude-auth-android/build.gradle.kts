@@ -46,6 +46,7 @@ dependencies {
     // Re-export core so Android apps can depend on this artifact alone.
     api(libs.klaude.auth)
     implementation(libs.androidx.browser)
+    implementation(libs.androidx.security.crypto)
 
     testImplementation(libs.junit)
 }
