@@ -97,6 +97,18 @@ class ClaudeAuthSessionTest {
         private val success: ClaudeCredentials? = null,
         private val error: Throwable? = null,
     ) : ClaudeAuthClient {
+        override fun beginSignIn(redirectUri: String) = error("not used")
+
+        override suspend fun completeSignIn(
+            session: com.tomspalding.klaudeauth.model.ClaudePendingAuthSession,
+            callback: com.tomspalding.klaudeauth.browser.ClaudeCallbackResult,
+        ): ClaudeCredentials = error("not used")
+
+        override suspend fun completeSignInFromRedirectUrl(
+            session: com.tomspalding.klaudeauth.model.ClaudePendingAuthSession,
+            redirectUrl: String,
+        ): ClaudeCredentials = error("not used")
+
         override suspend fun signIn(launchBrowser: ClaudeBrowserLauncher): ClaudeCredentials =
             refreshOrSignIn(null, launchBrowser)
 
