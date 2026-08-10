@@ -7,7 +7,6 @@ import com.tomspalding.klaudeauth.model.ClaudeCredentials
 import com.tomspalding.klaudeauth.model.ClaudeOAuthTokens
 import com.tomspalding.klaudeauth.model.ClaudePendingAuthSession
 import com.tomspalding.klaudeauth.model.ClaudePkce
-import com.tomspalding.klaudeauth.model.needsRefresh
 import com.tomspalding.klaudeauth.storage.ClaudePendingAuthSessionStore
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.runBlocking
