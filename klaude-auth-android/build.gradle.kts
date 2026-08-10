@@ -45,6 +45,7 @@ android {
 dependencies {
     // Re-export core so Android apps can depend on this artifact alone.
     api(libs.klaude.auth)
+    implementation(libs.androidx.browser)
 
     testImplementation(libs.junit)
 }
