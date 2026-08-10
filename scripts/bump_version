@@ -1,0 +1,95 @@
+#!/bin/bash
+set -euo pipefail
+
+usage() {
+  cat <<EOF
+Usage: $(basename "$0") [patch|minor|major] [--push] [--dry-run]
+
+Bump semver from the latest vX.Y.Z tag and create a new annotated tag.
+Default bump level is patch.
+EOF
+}
+
+BUMP="patch"
+PUSH=false
+DRY_RUN=false
+
+while [[ $# -gt 0 ]]; do
+  case "$1" in
+    major|minor|patch)
+      BUMP="$1"
+      ;;
+    --push)
+      PUSH=true
+      ;;
+    --dry-run)
+      DRY_RUN=true
+      ;;
+    -h|--help)
+      usage
+      exit 0
+      ;;
+    *)
+      echo "error: unknown argument: $1" >&2
+      usage >&2
+      exit 1
+      ;;
+  esac
+  shift
+done
+
+if ! git rev-parse --git-dir >/dev/null 2>&1; then
+  echo "error: not inside a git repository" >&2
+  exit 1
+fi
+
+latest=$(
+  git tag -l 'v*' --sort=-v:refname \
+    | grep -E '^v[0-9]+\.[0-9]+\.[0-9]+$' \
+    | head -n 1 \
+    || true
+)
+
+if [[ -z "$latest" ]]; then
+  major=0
+  minor=0
+  patch=0
+else
+  version="${latest#v}"
+  IFS=. read -r major minor patch <<< "$version"
+fi
+
+case "$BUMP" in
+  major)
+    major=$((major + 1))
+    minor=0
+    patch=0
+    ;;
+  minor)
+    minor=$((minor + 1))
+    patch=0
+    ;;
+  patch)
+    patch=$((patch + 1))
+    ;;
+esac
+
+new_tag="v${major}.${minor}.${patch}"
+
+if [[ "$DRY_RUN" == true ]]; then
+  echo "$new_tag"
+  exit 0
+fi
+
+if git rev-parse "$new_tag" >/dev/null 2>&1; then
+  echo "error: tag ${new_tag} already exists" >&2
+  exit 1
+fi
+
+git tag -a "$new_tag" -m "$new_tag"
+echo "created tag ${new_tag}"
+
+if [[ "$PUSH" == true ]]; then
+  git push origin "$new_tag"
+  echo "pushed ${new_tag}"
+fi
