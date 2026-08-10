@@ -3,6 +3,7 @@ package com.tomspalding.klaudeauth
 import com.tomspalding.klaudeauth.model.ClaudeAuthState
 import com.tomspalding.klaudeauth.model.ClaudeCredentials
 import com.tomspalding.klaudeauth.model.ClaudeOAuthTokens
+import com.tomspalding.klaudeauth.model.needsRefresh
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.runBlocking
 import org.junit.Assert.assertEquals
@@ -114,6 +115,16 @@ class ClaudeAuthSessionTest {
 
         override suspend fun refresh(credentials: ClaudeCredentials): ClaudeCredentials =
             success ?: throw error ?: error("no result")
+
+        override suspend fun ensureFresh(
+            credentials: ClaudeCredentials,
+            refreshMargin: java.time.Duration,
+        ): ClaudeCredentials =
+            if (credentials.needsRefresh(refreshMargin)) {
+                refresh(credentials)
+            } else {
+                credentials
+            }
 
         override suspend fun refreshOrSignIn(
             current: ClaudeCredentials?,
