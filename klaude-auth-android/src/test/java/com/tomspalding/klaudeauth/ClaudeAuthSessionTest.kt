@@ -257,5 +257,12 @@ class ClaudeAuthSessionTest {
             error?.let { throw it }
             return success ?: error("no result")
         }
+
+        override suspend fun fetchUsage(
+            credentials: ClaudeCredentials,
+        ): com.tomspalding.klaudeauth.model.ClaudeUsageSnapshot {
+            error?.let { throw it }
+            return com.tomspalding.klaudeauth.model.ClaudeUsageSnapshot()
+        }
     }
 }
