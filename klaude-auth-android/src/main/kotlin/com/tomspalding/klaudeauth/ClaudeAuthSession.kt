@@ -29,7 +29,9 @@ class ClaudeAuthSession(
     suspend fun connect() {
         uiOverride.value = ClaudeAuthState.Loading
         runCatching {
-            authClient.refreshOrSignIn(authRepository.loadCredentials(), launchBrowser)
+            val current = authRepository.loadCredentials()
+                ?: error("Not signed in")
+            authClient.ensureFresh(current)
         }.onSuccess { credentials ->
             authRepository.saveCredentials(credentials)
             uiOverride.value = null

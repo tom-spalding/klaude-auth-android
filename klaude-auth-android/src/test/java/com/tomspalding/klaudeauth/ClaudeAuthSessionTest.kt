@@ -43,6 +43,7 @@ class ClaudeAuthSessionTest {
     @Test
     fun connectSavesCredentialsOnSuccess() = runBlocking {
         val repository = PlaceholderClaudeAuthRepository()
+        repository.saveCredentials(existing)
         val session = session(
             repository = repository,
             client = FakeClaudeAuthClient(success = refreshed),
@@ -59,6 +60,7 @@ class ClaudeAuthSessionTest {
     @Test
     fun connectSetsFailedAndDoesNotSaveOnError() = runBlocking {
         val repository = PlaceholderClaudeAuthRepository()
+        repository.saveCredentials(existing)
         val session = session(
             repository = repository,
             client = FakeClaudeAuthClient(error = IllegalStateException("HTTP 401: nope")),
@@ -67,10 +69,28 @@ class ClaudeAuthSessionTest {
 
         session.connect()
 
-        assertNull(repository.loadCredentials())
+        assertEquals(existing, repository.loadCredentials())
         val state = session.authState.first()
         assertTrue(state is ClaudeAuthState.Failed)
         assertEquals("HTTP 401: nope", (state as ClaudeAuthState.Failed).message)
+    }
+
+    @Test
+    fun connectFailsWhenNotSignedIn() = runBlocking {
+        val repository = PlaceholderClaudeAuthRepository()
+        val browserOpens = AtomicReference(0)
+        val session = session(
+            repository = repository,
+            launchBrowser = ClaudeBrowserLauncher { browserOpens.set(browserOpens.get() + 1) },
+        )
+
+        session.connect()
+
+        assertNull(repository.loadCredentials())
+        assertEquals(0, browserOpens.get())
+        val state = session.authState.first()
+        assertTrue(state is ClaudeAuthState.Failed)
+        assertTrue((state as ClaudeAuthState.Failed).message.contains("Not signed in"))
     }
 
     @Test
@@ -226,12 +246,10 @@ class ClaudeAuthSessionTest {
         override suspend fun ensureFresh(
             credentials: ClaudeCredentials,
             refreshMargin: java.time.Duration,
-        ): ClaudeCredentials =
-            if (credentials.needsRefresh(refreshMargin)) {
-                refresh(credentials)
-            } else {
-                credentials
-            }
+        ): ClaudeCredentials {
+            error?.let { throw it }
+            return success ?: credentials
+        }
 
         override suspend fun refreshOrSignIn(
             current: ClaudeCredentials?,
